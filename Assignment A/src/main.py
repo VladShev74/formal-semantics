@@ -107,15 +107,75 @@ def type_check_cmd(cmd: Cmd, context: dict):
     else:
         raise TypeError(f"Unknown command type: {type(cmd)}")
 
-if __name__ == "__main__":
-    prog = Seq(
-        Assign("x", IntLiteral(10)),
-        If(
-            BinOp("=", Var("x"), IntLiteral(10)),
-            Assign("y", BoolLiteral(True)),
-            Assign("y", BoolLiteral(False))
+# TESTING
+def run_tests():
+    print("Running Type Checker Tests...\n")
+
+    # Test 1: Valid integer assignment and arithmetic
+    try:
+        prog1 = Seq(
+            Assign("a", IntLiteral(5)),
+            Assign("b", BinOp("+", Var("a"), IntLiteral(10)))
         )
-    )
-    context = {}
-    type_check_cmd(prog, context)
-    print("Program is well-typed. Context:", context)
+        context1 = {}
+        type_check_cmd(prog1, context1)
+        print("Test 1 Passed:", context1)
+    except Exception as e:
+        print("Test 1 Failed:", e)
+
+    # Test 2: Valid boolean logic and if statement
+    try:
+        prog2 = Seq(
+            Assign("flag", BoolLiteral(True)),
+            If(
+                BinOp("and", Var("flag"), BoolLiteral(False)),
+                Assign("result", IntLiteral(1)),
+                Assign("result", IntLiteral(0))
+            )
+        )
+        context2 = {}
+        type_check_cmd(prog2, context2)
+        print("Test 2 Passed:", context2)
+    except Exception as e:
+        print("Test 2 Failed:", e)
+
+    # Test 3: Invalid use of integer in boolean operation
+    try:
+        prog3 = Assign("c", BinOp("and", IntLiteral(1), BoolLiteral(True)))
+        context3 = {}
+        type_check_cmd(prog3, context3)
+        print("Test 3 Failed: Expected TypeError")
+    except TypeError as e:
+        print("Test 3 Passed:", e)
+    except Exception as e:
+        print("Test 3 Failed with unexpected error:", e)
+
+    # Test 4: Incompatible variable reassignment (if enforcing strict typing)
+    try:
+        prog4 = Seq(
+            Assign("v", IntLiteral(3)),
+            Assign("v", BoolLiteral(True))  # Optional stricter enforcement
+        )
+        context4 = {}
+        type_check_cmd(prog4, context4)
+        print("Test 4 Passed (allowed reassignment):", context4)
+    except TypeError as e:
+        print("Test 4 Passed (caught type error):", e)
+    except Exception as e:
+        print("Test 4 Failed with unexpected error:", e)
+
+    # Test 5: Valid while loop with boolean condition
+    try:
+        prog5 = While(
+            BinOp("<=", Var("x"), IntLiteral(10)),
+            Assign("x", BinOp("+", Var("x"), IntLiteral(1)))
+        )
+        context5 = {"x": "int"}
+        type_check_cmd(prog5, context5)
+        print("Test 5 Passed:", context5)
+    except Exception as e:
+        print("Test 5 Failed:", e)
+
+
+if __name__ == "__main__":
+    run_tests()
